@@ -1,14 +1,16 @@
 import os
-from dotenv import load_dotenv
 import streamlit as st
 from openai import OpenAI
+from dotenv import load_dotenv
 
+# Load local .env for local development
 load_dotenv()
 
-api_key = os.getenv("GROQ_API_KEY")
+# Try Streamlit secrets first, then fall back to local .env
+api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
 
 if not api_key:
-    st.error("GROQ_API_KEY not found in .env file")
+    st.error("GROQ_API_KEY not found. Add it to Streamlit secrets or your local .env file.")
     st.stop()
 
 client = OpenAI(
@@ -17,10 +19,11 @@ client = OpenAI(
 )
 
 st.set_page_config(page_title="Basic LLM Chatbot", page_icon="🤖")
+st.title("🤖 Basic LLM Chatbot")
+
 if st.button("Clear Chat"):
     st.session_state.messages = []
     st.rerun()
-st.title("🤖 Basic LLM Chatbot")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -43,9 +46,9 @@ if user_input:
                 response = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=[
-    {"role": "system", "content": "You are a helpful, simple, and clear AI assistant."},
-    *st.session_state.messages
-]
+                        {"role": "system", "content": "You are a helpful, simple, and clear AI assistant."},
+                        *st.session_state.messages
+                    ]
                 )
                 reply = response.choices[0].message.content
                 st.write(reply)
