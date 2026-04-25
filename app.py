@@ -3,14 +3,18 @@ import streamlit as st
 from openai import OpenAI
 from dotenv import load_dotenv
 
-# Load local .env for local development
 load_dotenv()
 
-# Try Streamlit secrets first, then fall back to local .env
-api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
+api_key = os.getenv("GROQ_API_KEY")
 
 if not api_key:
-    st.error("GROQ_API_KEY not found. Add it to Streamlit secrets or your local .env file.")
+    try:
+        api_key = st.secrets["GROQ_API_KEY"]
+    except Exception:
+        api_key = None
+
+if not api_key:
+    st.error("GROQ_API_KEY not found. Add it to your local .env file or Streamlit secrets.")
     st.stop()
 
 client = OpenAI(
