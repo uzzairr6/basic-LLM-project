@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 
 # Page config must be before any st.write, st.title, etc.
+st.write("Secrets keys available:", list(st.secrets.keys()))
 st.set_page_config(
     page_title="Basic LLM Chatbot",
     page_icon="🤖"
