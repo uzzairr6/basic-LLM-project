@@ -1,5 +1,3 @@
-# 
-
 import os
 from pathlib import Path
 
@@ -13,44 +11,54 @@ st.set_page_config(
     page_icon="🤖"
 )
 
-load_dotenv(Path(__file__).parent / ".env")
+
+# Load .env only for local development
+env_path = Path(__file__).parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 
-def get_api_key():
-    try:
-        return st.secrets["GROQ_API_KEY"]
-    except Exception:
-        return os.getenv("GROQ_API_KEY")
+# First try Streamlit Cloud secrets
+try:
+    api_key = st.secrets["GROQ_API_KEY"]
+except Exception:
+    api_key = None
 
 
-@st.cache_resource
-def get_client(api_key):
-    return OpenAI(
-        api_key=api_key,
-        base_url="https://api.groq.com/openai/v1"
-    )
+# Fallback for local VS Code testing
+if not api_key:
+    api_key = os.getenv("GROQ_API_KEY")
 
-
-api_key = get_api_key()
 
 if not api_key:
-    st.error("GROQ_API_KEY not found. Add it to your local .env file or Streamlit secrets.")
+    st.error("GROQ_API_KEY not found. Add it to Streamlit Secrets or your local .env file.")
     st.stop()
 
 
-client = get_client(api_key)
+client = OpenAI(
+    api_key=api_key,
+    base_url="https://api.groq.com/openai/v1"
+)
 
 
 st.title("🤖 Basic LLM Chatbot")
+st.markdown(
+    """
+    <div style='text-align: center; margin-top: -10px;'>
+        <p style='color: gray; font-size: 14px;'>Created by Uzair</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 st.write("Ask me anything. This chatbot uses Groq API with an OpenAI-compatible client.")
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
 
 if st.button("Clear Chat"):
     st.session_state.messages = []
     st.rerun()
+
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
 
 for message in st.session_state.messages:
@@ -71,7 +79,7 @@ if user_input:
         st.write(user_input)
 
     with st.chat_message("assistant"):
-        with st.spinner("Generating response..."):
+        with st.spinner("Thinking..."):
             try:
                 response = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
